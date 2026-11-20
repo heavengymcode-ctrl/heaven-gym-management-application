@@ -392,14 +392,28 @@ export async function payAdvance() {
   throw new ApiError(400, 'Additional membership payments are made against the remaining balance using the membership payment flow.');
 }
 
-export async function renewMembership(userId, membershipId) {
+export async function renewMembership(userId, membershipId, planId) {
+  if (!mongoose.isValidObjectId(membershipId)) throw new ApiError(400, 'Invalid membership ID');
+  if (!mongoose.isValidObjectId(planId)) throw new ApiError(400, 'Please select a valid membership plan');
+
   const oldMembership = await Membership.findOne({ _id: membershipId, user_id: userId });
   if (!oldMembership) throw new ApiError(404, 'Membership not found');
   if (oldMembership.status === 'scheduled') {
     throw new ApiError(409, 'This renewal is already scheduled. You can renew again after it becomes active and completes.');
   }
-  const plan = await MembershipPlan.findOne({ _id: oldMembership.plan_id, is_active: true });
-  if (!plan) throw new ApiError(404, 'Original plan not found');
+
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const plan = await MembershipPlan.findOne({
+    _id: planId,
+    is_active: true,
+    $and: [
+      { $or: [{ is_offer: { $ne: true } }, { offer_start_date: null }, { offer_start_date: { $lte: now } }] },
+      { $or: [{ is_offer: { $ne: true } }, { offer_end_date: null }, { offer_end_date: { $gte: endOfToday } }] },
+    ],
+  });
+  if (!plan) throw new ApiError(404, 'Selected membership plan is unavailable. Please refresh the plans and choose an active plan.');
   const admission = await GymAdmission.findOne({ user_id: userId, status: 'active' });
   if (!admission) throw new ApiError(400, 'An active gym admission is required to renew membership.');
   if (oldMembership.status === 'active' || oldMembership.status === 'scheduled') {
