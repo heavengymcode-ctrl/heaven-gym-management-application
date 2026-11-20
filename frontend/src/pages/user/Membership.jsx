@@ -81,9 +81,13 @@ export default function Membership() {
     } catch (err) { alert(typeof err === 'string' ? err : (err?.message || 'Membership purchase failed')); }
   }
 
-  async function renew(id) {
+  async function renew(membershipId, planId) {
+    if (!membershipId || !planId) {
+      alert('Please choose a valid membership plan before renewing.');
+      return;
+    }
     try {
-      const membership = await dispatch(renewMembership(id)).unwrap();
+      const membership = await dispatch(renewMembership({ membershipId, planId })).unwrap();
       if (membership.payment_status === 'paid' || Number(membership.amount_due) === 0) {
         await dispatch(fetchMyMemberships());
         alert('Your membership is renewed.');
@@ -113,7 +117,7 @@ export default function Membership() {
       {currentMembership && (
         <Card className="border-l-4 border-l-brand-600">
           <div className="flex items-center justify-between"><div><p className="text-sm text-brand-700 dark:text-brand-400">{scheduledMembership ? 'Upcoming Membership' : 'Active Membership'}</p><h3 className="mt-1 font-display text-xl font-bold text-ink-950 dark:text-white">{currentMembership.plan_name_snapshot}</h3><p className="mt-1 text-sm text-surface-600 dark:text-surface-400">{formatDate(currentMembership.start_date)} — {formatDate(currentMembership.end_date)}{scheduledMembership ? ' (upcoming)' : ` (${expiryInfo.label})`}</p></div><Badge tone={scheduledMembership ? 'info' : 'success'}>{scheduledMembership ? 'Scheduled' : 'Active'}</Badge></div>
-          {activeMembership && (expiryInfo.status === 'expired' || expiryInfo.status === 'today' || daysLeft <= 7) && <div className="mt-4 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-500/10"><span className="text-sm font-medium text-amber-700 dark:text-amber-400">{expiryInfo.status === 'expired' ? 'Membership expired' : expiryInfo.status === 'today' ? 'Expires today' : `Expiring in ${daysLeft === 1 ? '1 day' : `${daysLeft} days`}`}</span><Button size="sm" onClick={() => renew(getMembershipId(activeMembership))}>Renew Now</Button></div>}
+          {activeMembership && (expiryInfo.status === 'expired' || expiryInfo.status === 'today' || daysLeft <= 7) && <div className="mt-4 flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 dark:bg-amber-500/10"><span className="text-sm font-medium text-amber-700 dark:text-amber-400">{expiryInfo.status === 'expired' ? 'Membership expired' : expiryInfo.status === 'today' ? 'Expires today' : `Expiring in ${daysLeft === 1 ? '1 day' : `${daysLeft} days`}`}</span><Button size="sm" onClick={() => renew(getMembershipId(activeMembership), activeMembership.plan_id)}>Renew Now</Button></div>}
         </Card>
       )}
 
@@ -182,7 +186,7 @@ export default function Membership() {
                     </div>
 
                     <div className="mt-5 border-t border-surface-100 pt-3 dark:border-surface-800">
-                      {isCurrent ? <Button variant="secondary" className="w-full" disabled>You're on this plan</Button> : !admission || admission.status !== 'active' ? <Button variant="secondary" className="w-full" disabled>Admission required</Button> : scheduledMembership ? <Button variant="secondary" className="w-full" disabled>Upcoming membership</Button> : pendingPaymentMembership ? <Button variant="secondary" className="w-full" disabled>Complete pending payment</Button> : activeMembership ? <Button variant="outline" className="w-full" onClick={() => renew(activeMembership.id)}>Renew membership <ArrowRight size={15} /></Button> : <Button className="w-full" onClick={() => purchasePlan(plan)}>Choose this plan <ArrowRight size={15} /></Button>}
+                      {isCurrent ? <Button variant="secondary" className="w-full" disabled>You're on this plan</Button> : !admission || admission.status !== 'active' ? <Button variant="secondary" className="w-full" disabled>Admission required</Button> : scheduledMembership ? <Button variant="secondary" className="w-full" disabled>Upcoming membership</Button> : pendingPaymentMembership ? <Button variant="secondary" className="w-full" disabled>Complete pending payment</Button> : activeMembership ? <Button variant="outline" className="w-full" onClick={() => renew(getMembershipId(activeMembership), plan.id)}>Renew membership <ArrowRight size={15} /></Button> : <Button className="w-full" onClick={() => purchasePlan(plan)}>Choose this plan <ArrowRight size={15} /></Button>}
                       <p className="mt-2 text-center text-[10px] text-surface-400">Secure payment · Details saved to your account</p>
                     </div>
                   </div>
@@ -193,7 +197,7 @@ export default function Membership() {
         </section>
       )}
 
-      <Card padding={false}><div className="border-b border-surface-200 px-5 py-4 dark:border-surface-800"><h3 className="font-display text-lg font-semibold text-ink-950 dark:text-white">Membership History</h3></div>{(memberships || []).length > 0 ? <div className="p-5"><div className="space-y-3">{memberships.map((m) => <div key={getMembershipId(m)} className="flex items-center justify-between border-b border-surface-100 pb-3 last:border-0 dark:border-surface-800"><div><p className="text-sm font-medium text-ink-900 dark:text-white">{m.plan_name_snapshot} — {formatCurrency(m.plan_price_snapshot)}</p><p className="text-xs text-surface-500">{formatDate(m.start_date)} → {formatDate(m.end_date)}</p><p className="text-xs text-surface-500">Advance applied: {formatCurrency(Number(m.advance_paid || 0))} · Remaining: {formatCurrency(Number(m.amount_due ?? 0))}</p></div><div className="flex items-center gap-3">{m.payment_status === 'pending' && Number(m.amount_due) > 0 && (<div className="flex gap-1.5"><Button size="sm" onClick={() => payMembership(m)}>Pay Now</Button><Button size="sm" variant="ghost" onClick={() => cancelPending(getMembershipId(m))}>Cancel</Button></div>)}{(m.effective_status || m.status) === 'expired' && <Button size="sm" variant="secondary" onClick={() => renew(getMembershipId(m))}>Renew</Button>}<Badge tone={statusTone[m.effective_status || m.status] || 'neutral'}>{m.payment_status === 'pending' && Number(m.amount_due) > 0 ? 'payment pending' : (m.effective_status || m.status).replace(/_/g, ' ')}</Badge></div></div>)}</div></div> : <div className="p-5"><EmptyState title="No memberships yet" /></div>}</Card>
+      <Card padding={false}><div className="border-b border-surface-200 px-5 py-4 dark:border-surface-800"><h3 className="font-display text-lg font-semibold text-ink-950 dark:text-white">Membership History</h3></div>{(memberships || []).length > 0 ? <div className="p-5"><div className="space-y-3">{memberships.map((m) => <div key={getMembershipId(m)} className="flex items-center justify-between border-b border-surface-100 pb-3 last:border-0 dark:border-surface-800"><div><p className="text-sm font-medium text-ink-900 dark:text-white">{m.plan_name_snapshot} — {formatCurrency(m.plan_price_snapshot)}</p><p className="text-xs text-surface-500">{formatDate(m.start_date)} → {formatDate(m.end_date)}</p><p className="text-xs text-surface-500">Advance applied: {formatCurrency(Number(m.advance_paid || 0))} · Remaining: {formatCurrency(Number(m.amount_due ?? 0))}</p></div><div className="flex items-center gap-3">{m.payment_status === 'pending' && Number(m.amount_due) > 0 && (<div className="flex gap-1.5"><Button size="sm" onClick={() => payMembership(m)}>Pay Now</Button><Button size="sm" variant="ghost" onClick={() => cancelPending(getMembershipId(m))}>Cancel</Button></div>)}{(m.effective_status || m.status) === 'expired' && <Button size="sm" variant="secondary" onClick={() => renew(getMembershipId(m), m.plan_id)}>Renew</Button>}<Badge tone={statusTone[m.effective_status || m.status] || 'neutral'}>{m.payment_status === 'pending' && Number(m.amount_due) > 0 ? 'payment pending' : (m.effective_status || m.status).replace(/_/g, ' ')}</Badge></div></div>)}</div></div> : <div className="p-5"><EmptyState title="No memberships yet" /></div>}</Card>
     </div>
   );
 }
