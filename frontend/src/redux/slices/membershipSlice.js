@@ -15,8 +15,8 @@ export const purchaseMembership = createAsyncThunk('memberships/purchase', async
   try { return await membershipService.purchase(planId); } catch (error) { return rejectWithValue(errorMessage(error, 'Failed to purchase membership')); }
 });
 
-export const renewMembership = createAsyncThunk('memberships/renew', async (id, { rejectWithValue }) => {
-  try { return await membershipService.renew(id); } catch (error) { return rejectWithValue(errorMessage(error, 'Failed to renew membership')); }
+export const renewMembership = createAsyncThunk('memberships/renew', async ({ membershipId, planId }, { rejectWithValue }) => {
+  try { return await membershipService.renew(membershipId, planId); } catch (error) { return rejectWithValue(errorMessage(error, 'Failed to renew membership')); }
 });
 
 const membershipSlice = createSlice({

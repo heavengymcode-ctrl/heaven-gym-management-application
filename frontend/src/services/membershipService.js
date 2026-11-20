@@ -8,6 +8,6 @@ export const membershipService = {
   getAdvancePaid: (membershipId) => api.get('/memberships/advance', { params: { membershipId } }).then((r) => r.data),
   purchase: (planId) => api.post('/memberships/purchase', { planId }).then((r) => r.data),
   payAdvance: (membershipId) => api.post('/memberships/advance', { membershipId }).then((r) => r.data),
-  renew: (id) => api.post(`/memberships/${id}/renew`).then((r) => r.data),
+  renew: (id, planId) => api.post(`/memberships/${id}/renew`, { planId }).then((r) => r.data),
   cancelPending: (id) => api.post(`/memberships/${id}/cancel`).then((r) => r.data),
 };
