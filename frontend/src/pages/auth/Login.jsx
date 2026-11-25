@@ -102,7 +102,7 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="login-form-controls space-y-5">
               <Input label="Email address" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="border-white/10 bg-[#0b0d12] text-white placeholder:text-surface-600" />
               <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" required className="border-white/10 bg-[#0b0d12] text-white placeholder:text-surface-600" />
               <div className="flex justify-end">

@@ -667,3 +667,23 @@ button, input, select, textarea { font: inherit; }
   }
 }
 
+
+
+/* Login form contrast fix: force readable typed text on the dark sign-in fields. */
+.login-form-controls input:not([type="checkbox"]):not([type="radio"]) {
+  background-color: #0b0d12 !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  caret-color: #f8fafc;
+}
+.login-form-controls input::placeholder {
+  color: #7c8494 !important;
+  opacity: 1;
+}
+.login-form-controls input:-webkit-autofill,
+.login-form-controls input:-webkit-autofill:hover,
+.login-form-controls input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc !important;
+  box-shadow: 0 0 0 1000px #0b0d12 inset !important;
+  caret-color: #f8fafc;
+}
