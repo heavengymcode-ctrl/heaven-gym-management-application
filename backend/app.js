@@ -31,15 +31,10 @@ import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import { persistentRateLimit } from './middlewares/persistentRateLimit.middleware.js';
 
 const app = express();
-const defaultAllowedOrigins = [
-  'https://heaven-gym-management-frontend.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:4173',
-];
-const allowedOrigins = String(process.env.CLIENT_URL || defaultAllowedOrigins.join(','))
-  .split(',')
-  .map((value) => value.trim().replace(/\/$/, ''))
-  .filter(Boolean);
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedOrigins = isProduction
+  ? ['https://heavengym.com']
+  : ['https://heavengym.com', 'http://localhost:5173', 'http://localhost:4173'];
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
