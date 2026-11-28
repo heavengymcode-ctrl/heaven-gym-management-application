@@ -1,15 +1,10 @@
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const DEFAULT_ALLOWED_ORIGINS = [
-  'https://heaven-gym-management-frontend.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:4173',
-];
-
 function allowedOrigins() {
-  return String(process.env.CLIENT_URL || DEFAULT_ALLOWED_ORIGINS.join(','))
-    .split(',')
-    .map((value) => value.trim().replace(/\/$/, ''))
-    .filter(Boolean);
+  if (process.env.NODE_ENV === 'production') {
+    return ['https://heavengym.com'];
+  }
+
+  return ['https://heavengym.com', 'http://localhost:5173', 'http://localhost:4173'];
 }
 
 export function originProtection(req, res, next) {
