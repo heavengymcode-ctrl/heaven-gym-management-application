@@ -3,7 +3,9 @@ import * as authService from '../services/auth.service.js';
 
 const cookieOptions = (maxAge) => {
   const production = process.env.NODE_ENV === 'production';
-  const sameSite = process.env.COOKIE_SAME_SITE || (production ? 'none' : 'lax');
+  // The frontend and API are HTTPS subdomains of heavengym.com,
+  // so production auth cookies can use strict same-site protection.
+  const sameSite = production ? 'strict' : (process.env.COOKIE_SAME_SITE || 'lax');
   return { httpOnly: true, secure: production, sameSite, maxAge, path: '/' };
 };
 const requestMetadata = (req) => ({
